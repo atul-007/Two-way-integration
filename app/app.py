@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from routes import configure_apis
 from db import init_db, close_db
-from kafka.kafka import kafka_event_consumer
+from Kafka.Kafka import kafka_event_consumer
 from multiprocessing import Process
 from integrations.stripe.webhooks import stripe_webhook_endpoints
 import os
@@ -44,3 +44,4 @@ if __name__ == "__main__":
 
     close_db()
     kafka_consumer_process.join()
+

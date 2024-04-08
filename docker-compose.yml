@@ -17,7 +17,7 @@ services:
       - mynetwork
   
   zookeeper:
-    image: confluentinc/cp-zookeeper:6.2.0
+    image: confluentinc/cp-zookeeper:latest
     container_name: zookeeper
     networks:
       - broker-kafka
@@ -29,7 +29,7 @@ services:
 
   # kafka for message queuing
   kafka:
-    image: confluentinc/cp-kafka:6.2.0
+    image: confluentinc/cp-kafka:latest
     container_name: kafka
     networks:
       - broker-kafka
