@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, Body
-from db import create_customer, read_customer, delete_customer, get_all_customers
+from db import create_customer, read_customer, delete_customer, get_all_customers,update_customer
 from Kafka.Kafka import kafka_event_producer
 import json
 
@@ -51,3 +51,16 @@ def configure_apis(app):
             return {"customers": customers}
         except Exception as e:
             raise HTTPException(status_code=500, detail=f"Error fetching customers: {str(e)}")
+        
+
+    # Route to update existing customer
+    @app.put("/customer/{customer_id}")
+    async def update_customer_info(customer_id: int, name: str = Body(...), email: str = Body(...)):
+        try:
+            customer_message = update_customer(customer_id, name, email)
+            json_message = json.dumps(customer_message)
+            kafka_event_producer(json_message)
+            return {"message": "Customer updated successfully"}
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=f"Error updating customer: {str(e)}")
+

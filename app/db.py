@@ -166,182 +166,36 @@ def get_all_customers():
     except Exception as e:
         print(f"Error fetching customers: {str(e)}")
         raise Exception("Internal Server Error")
+    
+def update_customer(customer_id, name, email, stripe_id=None):
+    try:
+        if stripe_id is None:
+            customer_data = read_customer(customer_id)
+            if customer_data is None:
+                raise Exception("Customer not present")
+            
+            stripe_id = customer_data[3]
+            
+        query = "UPDATE customer SET name = %s, email = %s, stripe_id = %s WHERE id = %s"
+        values = (name, email, stripe_id, customer_id)
+        cursor.execute(query, values)
+        conn.commit()
 
-# closing database connection when app closes
+        customer_message = {
+            "name": name,
+            "email": email,
+            "stripe_id": stripe_id,
+            "action": "update",
+        }
+
+        return customer_message
+    except Exception as e:
+        print(f"Error updating customer: {str(e)}")
+        raise Exception("Internal Server Error")
+    
 def close_db():
     try:
         conn.close()
     except Exception as e:
         print(f"Error closing database connection: {str(e)}")
 
-# import psycopg2
-# import os
-# from dotenv import load_dotenv
-
-# # Specify the full path to the .env file
-# dotenv_path = os.path.join(os.path.dirname(__file__), '..', '.env')
-
-# # Load environment variables from the .env file
-# load_dotenv(dotenv_path)
-
-# # Database configuration for PostgreSQL
-# db_config = {
-#     "host": os.getenv("DB_HOST", "localhost"),
-#     "user": os.getenv("DB_USER", "postgres"),  # Default user for PostgreSQL is "postgres"
-#     "password": os.getenv("DB_PASSWORD", "postgres_password"),  # Default password for PostgreSQL is "postgres_password"
-#     "port": os.getenv("DB_PORT", "5432"),  # Default port for PostgreSQL is 5432
-#     "database": os.getenv("DB_NAME", "zenskar"),  # Specify your database name
-# }
-
-# # Global connection and cursor for PostgreSQL
-# conn = None
-# cursor = None
-
-# # Initialize database connection
-# def init_db():
-#     global conn, cursor
-#     try:
-#         conn = psycopg2.connect(**db_config)
-#         cursor = conn.cursor()
-
-#         # Create database if not exists
-#         create_db_query = "CREATE DATABASE zenskar"
-#         cursor.execute(create_db_query)
-#         conn.commit()
-
-#         # Switch to the specified database
-#         conn.close()
-#         db_config["database"] = os.getenv("DB_NAME", "zenskar")
-#         conn = psycopg2.connect(**db_config)
-#         cursor = conn.cursor()
-
-#         # Create table if not exists
-#         create_table_query = """
-#         CREATE TABLE IF NOT EXISTS customer (
-#             id SERIAL PRIMARY KEY,
-#             name VARCHAR(255) NOT NULL,
-#             email VARCHAR(255) NOT NULL UNIQUE,
-#             stripe_id VARCHAR(255)
-#         )
-#         """
-#         cursor.execute(create_table_query)
-#         conn.commit()
-
-#     except Exception as e:
-#         print(f"Error: {str(e)}")
-
-# # CRUD functions
-# def create_customer(name, email, stripe_id=None):
-#     try:
-#         query = "INSERT INTO customer (name, email, stripe_id) VALUES (%s, %s, %s) RETURNING id"
-#         values = (name, email, stripe_id)
-#         cursor.execute(query, values)
-#         customer_id = cursor.fetchone()[0]
-#         conn.commit()
-
-#         customer_message = {
-#             "id": customer_id,
-#             "name": name,
-#             "email": email,
-#             "stripe_id": stripe_id,
-#             "action": "create",
-#         }
-
-#         return customer_message
-#     except Exception as e:
-#         print(f"Error creating customer: {str(e)}")
-#         raise Exception("Internal Server Error")
-
-# def read_customer(customer_id):
-#     try:
-#         query = "SELECT * FROM customer WHERE id = %s"
-#         cursor.execute(query, (customer_id,))
-#         customer_data = cursor.fetchone()
-
-#         if customer_data:
-#             customer = {
-#                 "id": customer_data[0],
-#                 "name": customer_data[1],
-#                 "email": customer_data[2],
-#                 "stripe_id": customer_data[3]
-#             }
-#             return customer
-#         else:
-#             return None
-#     except Exception as e:
-#         print(f"Error reading customer: {str(e)}")
-#         raise Exception("Internal Server Error")
-
-# def update_customer(customer_id, name, email, stripe_id=None):
-#     try:
-#         if stripe_id is None:
-#             customer_data = read_customer(customer_id)
-#             if customer_data is None:
-#                 raise Exception("Customer not present")
-
-#             stripe_id = customer_data["stripe_id"]
-
-#         query = "UPDATE customer SET name = %s, email = %s, stripe_id = %s WHERE id = %s"
-#         values = (name, email, stripe_id, customer_id)
-#         cursor.execute(query, values)
-#         conn.commit()
-
-#         customer_message = {
-#             "id": customer_id,
-#             "name": name,
-#             "email": email,
-#             "stripe_id": stripe_id,
-#             "action": "update",
-#         }
-
-#         return customer_message
-#     except Exception as e:
-#         print(f"Error updating customer: {str(e)}")
-#         raise Exception("Internal Server Error")
-
-# def delete_customer(customer_id):
-#     try:
-#         query = "DELETE FROM customer WHERE id = %s RETURNING name, email, stripe_id"
-#         cursor.execute(query, (customer_id,))
-#         deleted_customer_data = cursor.fetchone()
-#         conn.commit()
-
-#         if deleted_customer_data:
-#             customer_message = {
-#                 "id": customer_id,
-#                 "name": deleted_customer_data[0],
-#                 "email": deleted_customer_data[1],
-#                 "stripe_id": deleted_customer_data[2],
-#                 "action": "delete",
-#             }
-
-#             return customer_message
-#         else:
-#             raise Exception("Customer not found")
-#     except Exception as e:
-#         print(f"Error deleting customer: {str(e)}")
-#         raise Exception("Internal Server Error")
-
-# # Other functions
-# # ...
-
-# # Get all customers
-# def get_all_customers():
-#     try:
-#         query = "SELECT * FROM customer"
-#         cursor.execute(query)
-#         customers = cursor.fetchall()
-
-#         customer_list = [{"id": row[0], "name": row[1], "email": row[2], "stripe_id": row[3]} for row in customers]
-
-#         return customer_list
-#     except Exception as e:
-#         print(f"Error fetching customers: {str(e)}")
-#         raise Exception("Internal Server Error")
-
-# # Close database connection
-# def close_db():
-#     try:
-#         conn.close()
-#     except Exception as e:
-#         print(f"Error closing database connection: {str(e)}")
